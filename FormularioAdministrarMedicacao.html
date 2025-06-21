@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Administrar Medicação</title>
+  <style>
+    body { font-family: sans-serif; }
+    label { display: block; margin-bottom: 5px; }
+    input[type="text"], select { width: 100%; padding: 8px; margin-bottom: 10px; box-sizing: border-box; }
+    button { padding: 10px 15px; margin-right: 10px; cursor: pointer; }
+  </style>
+  <script>
+    function administrar() {
+      var animalId = document.getElementById('animalId').value;
+      var dataHora = document.getElementById('dataHora').value;
+      var medicacao = document.getElementById('medicacao').value;
+      var dose = document.getElementById('dose').value;
+      var via = document.getElementById('via').value;
+      var observacoes = document.getElementById('observacoes').value;
+
+      google.script.run.withSuccessHandler(fecharDialogo).registrarAdministracaoMedicacao(
+          animalId, dataHora, medicacao, dose, via, observacoes
+      );
+    }
+
+    function fecharDialogo() {
+      google.script.host.close();
+    }
+  </script>
+</head>
+<body>
+  <h2>Administrar Medicação</h2>
+  <label for="animalId">ID do Animal:</label>
+  <input type="text" id="animalId" required><br>
+
+  <label for="dataHora">Data e Hora da Administração:</label>
+  <input type="datetime-local" id="dataHora" required><br>
+
+  <label for="medicacao">Medicação:</label>
+  <select id="medicacao">
+    <? var lista = listaMedicacoes; for (var i = 0; i < lista.length; i++) { ?>
+      <option value="<?= lista[i] ?>"><?= lista[i] ?></option>
+    <? } ?>
+  </select><br>
+
+  <label for="dose">Dose:</label>
+  <input type="text" id="dose"><br>
+
+  <label for="via">Via de Administração:</label>
+  <input type="text" id="via"><br>
+
+  <label for="observacoes">Observações:</label>
+  <input type="text" id="observacoes"><br>
+
+  <button onclick="administrar()">Registrar Administração</button>
+  <button onclick="fecharDialogo()">Cancelar</button>
+</body>
+</html>
