@@ -3,7 +3,12 @@
 <head>
   <title>Informações do Animal</title>
   <style>
-    body { font-family: sans-serif; }
+    body { 
+      font-family: sans-serif; 
+      /* Adicione isso para garantir que o corpo seja visível para o html2canvas, se for um problema de layout */
+      overflow: auto; /* Permite rolagem se o conteúdo for maior que a tela */
+      padding: 20px; /* Adiciona um respiro nas bordas para a imagem */
+    }
     .animal-info-section { margin-bottom: 20px; }
     .animal-info-section h3 { margin-top: 0; }
     .info-grid {
@@ -27,15 +32,26 @@
     }
     button { padding: 10px 15px; cursor: pointer; margin-right: 10px; }
     .modal-container {
-      width: 90%; /* Aumenta a largura do modal */
-      max-width: 1200px; /* Largura máxima */
+      /* Remova ou ajuste as propriedades de largura e altura fixas se o problema for corte */
+      /* Se precisar de largura máxima, mantenha max-width */
+      width: 90%; 
+      max-width: 1200px; 
       margin: auto;
+      /* Border para depuração, remova depois */
+      /* border: 1px solid red; */ 
     }
   </style>
   <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
   <script>
     function salvarComoImagem() {
-      html2canvas(document.querySelector('.modal-container')).then(canvas => {
+      // Altere o seletor para capturar o body inteiro (ou um elemento que contenha tudo)
+      // O '.modal-container' geralmente funciona bem se ele realmente envolve tudo e não tem overflow oculto
+      // Se ainda cortar, tente document.body
+      html2canvas(document.body, { 
+          scale: 2, // Aumenta a escala para melhorar a qualidade da imagem para impressão
+          logging: true, // Útil para depuração, veja o console do navegador
+          useCORS: true // Se você tiver imagens de outras fontes, pode ajudar
+      }).then(canvas => {
         var imgData = canvas.toDataURL('image/png');
         var link = document.createElement('a');
         link.href = imgData;
@@ -52,8 +68,7 @@
   </script>
 </head>
 <body>
-  <div class="modal-container">
-    <h2>Informações do Animal (ID: <span id="animalId"><?= animal[0] ?></span>)</h2>
+  <div class="modal-container"> <h2>Informações do Animal (ID: <span id="animalId"><?= animal[0] ?></span>)</h2>
 
     <div class="animal-info-section">
       <h3>Ficha do Animal</h3>
