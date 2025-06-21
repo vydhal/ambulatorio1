@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Registrar Consulta</title>
+  <style>
+    body { font-family: sans-serif; }
+    label { display: block; margin-bottom: 5px; }
+    input[type="text"], select, textarea, input[type="datetime-local"], input[type="checkbox"] {
+      width: 100%; padding: 8px; margin-bottom: 10px; box-sizing: border-box;
+    }
+    textarea { height: 150px; }
+    button { padding: 10px 15px; margin-right: 10px; cursor: pointer; }
+
+    /* Estilos para alinhar checkboxes e labels */
+    .medicacao-item {
+      display: flex; /* Usa Flexbox para o alinhamento */
+      align-items: center; /* Alinha verticalmente os itens */
+      margin-bottom: 5px; /* Espaço entre os itens */
+    }
+
+    .medicacao-item input[type="checkbox"] {
+      margin-right: 5px; /* Espaço entre o checkbox e o texto */
+      width: auto; /* Garante que o checkbox não estique */
+    }
+
+    .medicacao-item label {
+      display: inline-block; /* Permite que o label fique na mesma linha */
+      margin-bottom: 0; /* Remove a margem inferior padrão do label */
+    }
+  </style>
+  <script>
+    function registrarConsulta() {
+      var animalId = document.getElementById('animalId').value;
+      var dataHoraConsulta = document.getElementById('dataHoraConsulta').value;
+      var observacoes = document.getElementById('observacoes').value;
+      var precisaRetorno = document.getElementById('precisaRetorno').checked;
+      var dataHoraRetorno = document.getElementById('dataHoraRetorno').value;
+      var medicacaoPrescritaTexto = document.getElementById('medicacaoPrescritaTexto').value;
+      var veterinario = document.getElementById('veterinarioResponsavel').value;
+
+      var medicacoesSelecionadas = [];
+      var checkboxesMedicacoes = document.querySelectorAll('input[name="medicacoes"]:checked');
+      for (var i = 0; i < checkboxesMedicacoes.length; i++) {
+        medicacoesSelecionadas.push(checkboxesMedicacoes[i].value);
+      }
+      var medicacoes = medicacoesSelecionadas.join(', ');
+
+      google.script.run.withSuccessHandler(fecharDialogo).registrarConsultaAmbulatorio1(
+          animalId, dataHoraConsulta, observacoes, precisaRetorno, dataHoraRetorno, medicacoes, medicacaoPrescritaTexto, veterinario
+      );
+    }
+
+    function mostrarCampoRetorno() {
+      var precisaRetorno = document.getElementById('precisaRetorno');
+      var divRetorno = document.getElementById('divRetorno');
+      divRetorno.style.display = precisaRetorno.checked ? 'block' : 'none';
+    }
+
+    function fecharDialogo() {
+      google.script.host.close();
+    }
+
+    // Garante que o campo de retorno comece escondido
+    window.onload = mostrarCampoRetorno;
+  </script>
+</head>
+<body>
+  <h2>Registrar Consulta</h2>
+  <label for="animalId">ID do Animal:</label>
+  <input type="text" id="animalId" required><br>
+
+  <label for="dataHoraConsulta">Data e Hora da Consulta:</label>
+  <input type="datetime-local" id="dataHoraConsulta" required><br>
+
+  <label for="observacoes">Observações da Consulta:</label>
+  <textarea id="observacoes"></textarea><br>
+
+  <label for="precisaRetorno">Necessita Retorno?</label>
+  <input type="checkbox" id="precisaRetorno" onchange="mostrarCampoRetorno()"><br>
+
+  <div id="divRetorno" style="display:none;">
+    <label for="dataHoraRetorno">Data e Hora do Retorno:</label>
+    <input type="datetime-local" id="dataHoraRetorno"><br>
+  </div>
+
+  <label for="veterinarioResponsavel">Veterinário Responsável:</label>
+  <select id="veterinarioResponsavel">
+    <option value="">-- Selecione --</option>
+    <? var listaVeterinarios = getListaVeterinarios(); for (var i = 0; i < listaVeterinarios.length; i++) { ?>
+      <option value="<?= listaVeterinarios[i] ?>"><?= listaVeterinarios[i] ?></option>
+    <? } ?>
+  </select><br>
+
+  <label>Medicações:</label><br>
+  <? var listaMedicacoes = getListaMedicacoes(); for (var i = 0; i < listaMedicacoes.length; i++) { ?>
+    <div class="medicacao-item">
+      <input type="checkbox" id="medicacao<?= i ?>" name="medicacoes" value="<?= listaMedicacoes[i] ?>">
+      <label for="medicacao<?= i ?>"><?= listaMedicacoes[i] ?></label>
+    </div>
+  <? } ?>
+
+  <label for="medicacaoPrescritaTexto">Medicação Prescrita (Texto Livre):</label>
+  <input type="text" id="medicacaoPrescritaTexto"><br>
+
+  <button onclick="registrarConsulta()">Registrar Consulta</button>
+  <button onclick="fecharDialogo()">Cancelar</button>
+</body>
+</html>
