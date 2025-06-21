@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Informações do Animal</title>
+  <style>
+    body { font-family: sans-serif; }
+    .animal-info-section { margin-bottom: 20px; }
+    .animal-info-section h3 { margin-top: 0; }
+    .info-grid {
+      display: grid;
+      grid-template-columns: auto auto; /* Duas colunas */
+      gap: 10px;
+    }
+    .info-grid p { margin: 5px 0; }
+    .history-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    .history-table th, .history-table td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+    .history-table th {
+      background-color: #f2f2f2;
+    }
+    button { padding: 10px 15px; cursor: pointer; margin-right: 10px; }
+    .modal-container {
+      width: 90%; /* Aumenta a largura do modal */
+      max-width: 1200px; /* Largura máxima */
+      margin: auto;
+    }
+  </style>
+  <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+  <script>
+    function salvarComoImagem() {
+      html2canvas(document.querySelector('.modal-container')).then(canvas => {
+        var imgData = canvas.toDataURL('image/png');
+        var link = document.createElement('a');
+        link.href = imgData;
+        link.download = 'AnimalInfo_' + document.getElementById('animalId').innerText + '.png';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      });
+    }
+
+    function fecharDialogo() {
+      google.script.host.close();
+    }
+  </script>
+</head>
+<body>
+  <div class="modal-container">
+    <h2>Informações do Animal (ID: <span id="animalId"><?= animal[0] ?></span>)</h2>
+
+    <div class="animal-info-section">
+      <h3>Ficha do Animal</h3>
+      <div class="info-grid">
+        <? for (var j = 0; j < cabecalhoCadastro.length; j++) { ?>
+          <p><b><?= cabecalhoCadastro[j] ?>:</b> <?= animal[j] ?></p>
+        <? } ?>
+      </div>
+    </div>
+
+    <div class="animal-info-section">
+      <h3>Histórico de Consultas</h3>
+      <? if (consultasAnimal.length > 0) { ?>
+        <table class="history-table">
+          <thead>
+            <tr>
+              <? for (var l = 0; l < cabecalhoHistorico.length; l++) { ?>
+                <th><?= cabecalhoHistorico[l] ?></th>
+              <? } ?>
+            </tr>
+          </thead>
+          <tbody>
+            <? for (var k = 0; k < consultasAnimal.length; k++) { ?>
+              <tr>
+                <? for (var l = 0; l < cabecalhoHistorico.length; l++) { ?>
+                  <td><?= consultasAnimal[k][l] ?></td>
+                <? } ?>
+              </tr>
+            <? } ?>
+          </tbody>
+        </table>
+      <? } else { ?>
+        <p>Nenhuma consulta registrada para este animal.</p>
+      <? } ?>
+    </div>
+
+    <button onclick="salvarComoImagem()">Salvar como Imagem</button>
+    <button onclick="fecharDialogo()">Fechar</button>
+  </div>
+</body>
+</html>
