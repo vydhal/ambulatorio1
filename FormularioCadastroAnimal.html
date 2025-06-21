@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Cadastrar Novo Animal</title>
+  <style>
+    body { font-family: sans-serif; }
+    label { display: block; margin-bottom: 5px; }
+    input[type="text"], input[type="email"], select, textarea { 
+      width: 100%; 
+      padding: 8px; 
+      margin-bottom: 10px; 
+      box-sizing: border-box; 
+    }
+    button { padding: 10px 15px; margin-right: 10px; cursor: pointer; }
+    /* Estilos para campos que podem ser ocultados/mostrados */
+    .hidden-field { display: none; } 
+  </style>
+  <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+  <script>
+    function cadastrar() {
+      // DADOS DO ANIMAL
+      var nome = document.getElementById('nome').value;
+      var especie = document.getElementById('especie').value;
+      var raca = document.getElementById('raca').value;
+      // Removido: var dataNascimento = document.getElementById('dataNascimento').value; 
+      var sexo = document.getElementById('sexo').value;
+      var porte = document.getElementById('porte').value; 
+      var pelagem = document.getElementById('pelagem').value; // Usando "pelagem" como no seu schema
+      var peso = document.getElementById('peso').value;
+      
+      // DADOS DO TUTOR
+      var tutorNome;
+      var tutorTelefone;
+      var tutorEmail;
+      var tutorCpf;
+      var tutorEndereco;
+
+      var tutorExistenteCheckbox = document.getElementById('tutorExistente');
+      if (tutorExistenteCheckbox.checked) {
+        // Se tutor existente, os campos do tutor devem estar preenchidos pela função preencherDadosTutorSelecionado
+        tutorNome = document.getElementById('tutorNome').value;
+        tutorTelefone = document.getElementById('tutorTelefone').value;
+        tutorEmail = document.getElementById('tutorEmail').value;
+        tutorCpf = document.getElementById('tutorCpf').value;
+        tutorEndereco = document.getElementById('tutorEndereco').value;
+        
+        // Validação: se checkbox marcado mas nada selecionado no dropdown, ou campos vazios
+        if (!tutorNome || !tutorCpf) { // Adiciona validação simples para nome/cpf do tutor
+             alert("Por favor, selecione um tutor existente ou preencha os dados do tutor.");
+             return; 
+        }
+      } else {
+        // Se novo tutor, pega os dados dos campos manuais
+        tutorNome = document.getElementById('tutorNome').value;
+        tutorTelefone = document.getElementById('tutorTelefone').value;
+        tutorEmail = document.getElementById('tutorEmail').value;
+        tutorCpf = document.getElementById('tutorCpf').value;
+        tutorEndereco = document.getElementById('tutorEndereco').value;
+        
+        // Validação: se novo tutor, esses campos são essenciais
+        if (!tutorNome || !tutorCpf) { 
+             alert("Por favor, preencha o Nome e CPF do Tutor para o novo cadastro.");
+             return; 
+        }
+      }
+      
+      var observacoes = document.getElementById('observacoes').value;
+
+      // ATENÇÃO: VERIFIQUE A ORDEM DOS PARÂMETROS AQUI COM A FUNÇÃO NO .GS
+      // ORDEM ESPERADA NO .GS (com base na sua última lista de colunas):
+      // nome, especie, raca, sexo, porte, pelagem, peso, 
+      // tutorNome, tutorTelefone, tutorEmail, tutorCpf, observacoes, tutorEndereco
+      google.script.run.withSuccessHandler(fecharDialogo).cadastrarNovoAnimalDoFormulario(
+          nome, especie, raca, sexo, porte, pelagem, peso, // Dados do Animal
+          tutorNome, tutorTelefone, tutorEmail, tutorCpf, observacoes, tutorEndereco); // Dados do Tutor
+    }
+
+    function fecharDialogo() {
+      google.script.host.close();
+    }
+
+    // Função para mostrar/ocultar o dropdown de tutores e campos do tutor
+    function toggleTutorFields() {
+      var tutorExistenteCheckbox = document.getElementById('tutorExistente');
+      var tutorDropdownContainer = document.getElementById('tutorDropdownContainer');
+      var tutorManualFields = document.getElementById('tutorManualFields');
+      var tutorNomeInput = document.getElementById('tutorNome');
+      var tutorTelefoneInput = document.getElementById('tutorTelefone');
+      var tutorEmailInput = document.getElementById('tutorEmail');
+      var tutorCpfInput = document.getElementById('tutorCpf');
+      var tutorEnderecoInput = document.getElementById('tutorEndereco');
+
+      if (tutorExistenteCheckbox.checked) {
+        tutorDropdownContainer.classList.remove('hidden-field');
+        tutorManualFields.classList.add('hidden-field'); // Oculta campos manuais
+        // Limpa os campos manuais quando seleciona tutor existente
+        tutorNomeInput.value = ''; 
+        tutorTelefoneInput.value = '';
+        tutorEmailInput.value = '';
+        tutorCpfInput.value = '';
+        tutorEnderecoInput.value = '';
+
+        // Carrega a lista de tutores no dropdown
+        google.script.run.withSuccessHandler(preencherDropdownTutores).getListaTutores();
+      } else {
+        tutorDropdownContainer.classList.add('hidden-field');
+        tutorManualFields.classList.remove('hidden-field'); // Mostra campos manuais
+        // Limpa o dropdown do tutor existente
+        document.getElementById('tutorExistenteDropdown').innerHTML = '<option value="">-- Selecione --</option>';
+        // Limpa os campos preenchidos automaticamente se desmarcar
+        tutorNomeInput.value = ''; 
+        tutorTelefoneInput.value = '';
+        tutorEmailInput.value = '';
+        tutorCpfInput.value = '';
+        tutorEnderecoInput.value = '';
+      }
+    }
+
+    // Função para preencher o dropdown de tutores
+    function preencherDropdownTutores(tutores) {
+      var dropdown = document.getElementById('tutorExistenteDropdown');
+      dropdown.innerHTML = '<option value="">-- Selecione um Tutor --</option>'; // Opção padrão
+
+      tutores.forEach(function(tutor) {
+        var option = document.createElement('option');
+        // Usamos o CPF como valor para facilitar a busca do tutor na planilha
+        // E o nome como texto exibido
+        option.value = tutor.cpf; 
+        option.text = tutor.nome;
+        dropdown.appendChild(option);
+      });
+    }
+
+    // Função para preencher os dados do tutor selecionado no dropdown
+    function preencherDadosTutorSelecionado() {
+      var selectedCpf = document.getElementById('tutorExistenteDropdown').value;
+      if (selectedCpf) {
+        google.script.run.withSuccessHandler(function(tutorData) {
+          if (tutorData) {
+            document.getElementById('tutorNome').value = tutorData.nome;
+            document.getElementById('tutorTelefone').value = tutorData.telefone;
+            document.getElementById('tutorEmail').value = tutorData.email;
+            document.getElementById('tutorCpf').value = tutorData.cpf;
+            document.getElementById('tutorEndereco').value = tutorData.endereco;
+          } else {
+            alert("Tutor não encontrado com o CPF selecionado. Por favor, tente novamente.");
+            limparCamposTutor(); // Limpa os campos se o tutor não for encontrado
+          }
+        }).getDadosTutorPorCpf(selectedCpf); // Chama a função no .gs para buscar os dados
+      } else {
+        // Se a opção padrão "-- Selecione --" for escolhida, limpa os campos
+        limparCamposTutor();
+      }
+    }
+
+    function limparCamposTutor() {
+      document.getElementById('tutorNome').value = '';
+      document.getElementById('tutorTelefone').value = '';
+      document.getElementById('tutorEmail').value = '';
+      document.getElementById('tutorCpf').value = '';
+      document.getElementById('tutorEndereco').value = '';
+    }
+
+    // Garante que os campos de tutor sejam ajustados ao carregar o formulário
+    document.addEventListener('DOMContentLoaded', toggleTutorFields);
+
+    function salvarComoImagem() {
+      html2canvas(document.querySelector('.modal-container')).then(canvas => {
+        var imgData = canvas.toDataURL('image/png');
+        var link = document.createElement('a');
+        link.href = imgData;
+        // Removido: document.getElementById('animalId').innerText - não existe neste modal
+        link.download = 'AnimalInfo_Cadastro.png'; // Nome genérico para download
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      });
+    }
+  </script>
+</head>
+<body>
+  <h2>Cadastrar Novo Animal</h2>
+  <label for="nome">Nome:</label>
+  <input type="text" id="nome" required><br>
+
+  <label for="especie">Espécie:</label>
+  <select id="especie">
+    <option value="">-- Selecione --</option>
+    <? var listaEspecies = getListaEspecies(); for (var i = 0; i < listaEspecies.length; i++) { ?>
+      <option value="<?= listaEspecies[i] ?>"><?= listaEspecies[i] ?></option>
+    <? } ?>
+  </select><br>
+
+  <label for="raca">Raça:</label>
+  <input type="text" id="raca"><br>
+
+  <label for="sexo">Sexo:</label>
+  <select id="sexo">
+    <option value="Macho">Macho</option>
+    <option value="Fêmea">Fêmea</option>
+    <option value="Desconhecido">Desconhecido</option>
+  </select><br>
+
+  <label for="porte">Porte:</label>
+  <select id="porte">
+    <option value="Filhote">Filhote</option>
+    <option value="Jovem">Jovem</option>
+    <option value="Adulto">Adulto</option>
+    <option value="Idoso">Idoso</option>
+    </select><br>
+
+  <label for="pelagem">Pelagem:</label> <input type="text" id="pelagem"><br>
+
+  <label for="peso">Peso (kg):</label>
+  <input type="text" id="peso"><br>
+
+  <h3>Dados do Tutor</h3>
+  <input type="checkbox" id="tutorExistente" onchange="toggleTutorFields()">
+  <label for="tutorExistente">Tutor Existente?</label><br><br>
+
+  <div id="tutorDropdownContainer" class="hidden-field">
+    <label for="tutorExistenteDropdown">Selecione o Tutor:</label>
+    <select id="tutorExistenteDropdown" onchange="preencherDadosTutorSelecionado()">
+      <option value="">-- Selecione um Tutor --</option>
+      </select><br>
+  </div>
+
+  <div id="tutorManualFields">
+    <label for="tutorNome">Nome do Tutor:</label>
+    <input type="text" id="tutorNome"><br>
+
+    <label for="tutorTelefone">Telefone do Tutor:</label>
+    <input type="text" id="tutorTelefone"><br>
+
+    <label for="tutorEmail">Email do Tutor:</label>
+    <input type="email" id="tutorEmail"><br>
+
+    <label for="tutorCpf">CPF do Tutor:</label>
+    <input type="text" id="tutorCpf" required><br>
+
+    <label for="tutorEndereco">Endereço do Tutor:</label>
+    <input type="text" id="tutorEndereco"><br>
+  </div>
+
+  <label for="observacoes">Observações:</label>
+  <textarea id="observacoes"></textarea><br>
+
+  <button onclick="cadastrar()">Cadastrar</button>
+  <button onclick="fecharDialogo()">Cancelar</button>
+</body>
+</html>
